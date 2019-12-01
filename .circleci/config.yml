@@ -1,0 +1,54 @@
+orbs:
+  aws-ecr: circleci/aws-ecr@6.5.0
+version: 2.1
+workflows:
+  build-and-deploy:
+    jobs:
+      - build
+      - aws-ecr/build_and_push_image:
+          account-url: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          repo: "${AWS_RESOURCE_NAME_PREFIX}/posts"
+          region: ${AWS_DEFAULT_REGION}
+          tag: "posts_${CIRCLE_BUILD_NUM}"
+          requires:
+            - build
+      - deploy:
+          requires:
+            - build
+            - aws-ecr/build_and_push_image
+
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      - image: node:13-alpine
+
+    working_directory: ~/posts
+
+    environment:
+      # environment variables
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - dependency-cache--{{ checksum "package-lock.json" }}
+
+      - run: npm install
+
+      - save_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+          paths:
+            - ./node_modules
+
+      # package into a jar
+      - run: 
+          name: run tests with coverage
+          command: npm run test:cov
+
+      # store raw contents of src code
+      - store_artifacts:
+          - store_artifacts:
+            path: coverage

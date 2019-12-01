@@ -21,7 +21,7 @@ WORKDIR /home/node
 
 COPY --from=builder /home/node/package*.json /home/node/
 COPY --from=builder /home/node/dist/ /home/node/dist/
-COPY --from=builder /home/node/db.json /home/node/db.json
+COPY --from=builder /home/node/db.json /home/node/
 
 RUN npm ci
 
